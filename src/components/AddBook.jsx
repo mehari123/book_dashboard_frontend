@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Alert, Button, DatePicker, Form, Input, InputNumber } from 'antd';
-
+import { collection, addDoc } from 'firebase/firestore';
 import Loading from '../Loading';
-import axios from 'axios';
+import { db } from '../config/firebase';
+import {v4 as uuidv4} from 'uuid';
 
 const AddBook = () => {
     const [added, setAdded] = useState(false)
@@ -13,20 +14,15 @@ const AddBook = () => {
 
         console.log(' book to be added  :', values);
         const updatedValues = {
-            ...values
+            ...values, id: uuidv4()
         };
 
         try {
             setLoading(true)
-            await axios.post('https://localhost/api/books/create/', updatedValues).then(response => {
-                console.warn('API Response add data:', response.data);
-            
-            })
-                .catch(error => {
-                    console.error('API Error:', error);
-                });
+            const booksCollection = collection(db, 'books');
+            const docRef = await addDoc(booksCollection, updatedValues);
+            console.log('Book added with ID:', docRef.id);
             setAdded(true)
-
 
         } catch (error) {
             console.error('API Error:', error);
@@ -40,8 +36,6 @@ const AddBook = () => {
     };
     if (added) {
     }
-
-
 
     if (successMessage) {
         return <Alert message={successMessage} type="success" showIcon closable onClose={() => setSuccessMessage('')} />
@@ -110,14 +104,8 @@ const AddBook = () => {
                     <Form.Item
                         label="Publication Date"
                         name="date"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input publication date!',
-                            },
-                        ]}
                     >
-                        <DatePicker />
+                        <Input />
                     </Form.Item>
 
                     <Form.Item

@@ -50,7 +50,7 @@ function App() {
             </Layout>
           </Layout>
         </div>
-        <div className='md:hidden block'>
+        <div className='sm:hidden block'>
           Please use your computer to see the project!
           <br />
           <i>will be done for mobile soon!</i>

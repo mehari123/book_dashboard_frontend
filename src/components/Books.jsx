@@ -5,9 +5,10 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import book11 from '../book1.jpeg'
 import { DeleteOutlined } from '@ant-design/icons'
 import Loading from '../Loading';
-import { analytics, app, firestore } from '../config/firebase';
+import { analytics, app, db, firestore } from '../config/firebase';
 import { logEvent } from 'firebase/analytics';
 import { getDatabase } from "firebase/database";
+import { doc, collection, getDocs, deleteDoc,  updateDoc} from 'firebase/firestore';
 
 const Books = () => {
 
@@ -21,15 +22,19 @@ const Books = () => {
     
     //TODO check if the database is connected in your analytics 
         const database = getDatabase(app);
-        console.warn("database is ,",database)
+        // console.warn("database is ,",database)
 
     //fetch the books data in the api  and use books instead of books1
     useEffect(() => {
         const fetchBooks = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('https://your-api-url/books');
-                setBooks(response.data);
+                const booksCollection = collection(db, 'books')
+                const booksSnapshot = await getDocs(booksCollection);
+                console.log(booksSnapshot)
+                const booksList =booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+            
+                setBooks(booksList);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching books:', error);
@@ -39,65 +44,6 @@ const Books = () => {
 
         fetchBooks();
     }, []);
-    const books1 = [
-        {
-            book_id: 0,
-            title: 'Love',
-            author: 'john doe',
-            image: book11,
-            date: '23-23-2011',
-            overview: '',
-            num_of_pages: 10,
-            genre: 'fiction',
-            price: '200$',
-            book_status: 'sold',
-            rating: 0,
-            amount: 0
-        },
-        {
-            book_id: 1,
-            title: 'Love',
-            author: 'john ',
-            image: '',
-            date: '23-23-2011',
-            overview: '',
-            num_of_pages: 10,
-            genre: 'fiction',
-            price: '200$',
-            book_status: 'sold',
-            rating: 0,
-            amount: 0
-        },
-        {
-            book_id: 0,
-            title: 'Love',
-            author: 'john doe',
-            image: book11,
-            date: '23-23-2011',
-            overview: '',
-            num_of_pages: 10,
-            genre: 'fiction',
-            price: '200$',
-            book_status: 'sold',
-            rating: 0,
-            amount: 0
-        },
-        {
-            book_id: 0,
-            title: 'Love',
-            author: 'john doe',
-            image: '',
-            date: '23-23-2011',
-            overview: '',
-            num_of_pages: 10,
-            genre: 'fiction',
-            price: '200$',
-            book_status: 'sold',
-            rating: 0,
-            amount: 0
-        }
-
-    ]
 
     const showModal = (book) => {
         setIsModalOpen(true);
@@ -105,29 +51,27 @@ const Books = () => {
 
     };
 
-
     const content = (id) => {
+        console.log(id)
         return (
             <div>
                 <p className='text-red-600'>Are you sure you want to delete ?</p>
                 <div className="flex justify-around">
                     <span className='cursor-pointer' >no</span>
                     <span className='cursor-pointer' onClick={() => deleteBook(id)}>yes</span>
-
                 </div>
             </div>
         );
     }
+
     const deleteBook = async (id) => {
         console.warn('book id to be deleted is', id)
         try {
             setLoading(true)
-            await axios.delete(`https://localhost/api/books/${id}`).then(response => {
-                console.warn('API delete data:', response.data);
-            })
-                .catch(error => {
-                    console.error('API Error:', error);
-                });
+            const bookRef = doc(db, 'books', id);
+            await deleteDoc(bookRef);
+            setBooks(books.filter(book => book.id !== id)); // Update books state
+            console.warn('Book deleted with id:', id);
 
         } catch (error) {
             console.error('API Error:', error);
@@ -140,11 +84,10 @@ const Books = () => {
     const handleOk = () => {
         setSelectedBook(null)
         setIsModalOpen(false);
-
     };
+
     const handleCancel = () => {
         setSelectedBook(null)
-
         setIsModalOpen(false);
     };
 
@@ -158,17 +101,14 @@ const Books = () => {
             }, {});
 
         try {
+
             setLoading(true)
-            await axios.put(`https://localhost/api/books/${selectedBook._id}`, { ...updatedValues }).then(response => {
-                console.warn('update books:', response.data);
+            const bookRef = doc(db, 'books', selectedBook.id);
+            await updateDoc(bookRef, updatedValues);
+            console.log('Book updated with ID:', selectedBook.id);
 
-
-            })
-                .catch(error => {
-                    console.error('API Error:', error);
-                });
-
-
+            // Update books state
+            setBooks(books.map(book => book.id === selectedBook.id ? { ...book, ...updatedValues } : book));
 
         } catch (error) {
             console.error('API Error:', error);
@@ -194,7 +134,7 @@ const Books = () => {
     return (
         <div className='pt-5' >
             {loading && <Loading />}
-            {<Link to={`/addbook/`} className='   bg-slate-600  text-green-400  px-4 p-3 rounded-md  text-center cursor-pointer'
+            {<Link to={`/addbook/`} className='bg-slate-600  text-green-400  px-4 p-3 rounded-md  text-center cursor-pointer'
             >Add Book</Link>}
             <div className="flex flex-col  mt-4">
                 <div className='p-4  border-green-500 border-t-4  shadow-2xl rounded-lg mt-4'>
@@ -214,11 +154,11 @@ const Books = () => {
                                 <td>amount</td>
                                 <td>Action</td>
                             </tr>
-                            {books1
-                                && books1
+                            {books
+                                && books
                                     .map((book) => (
                                         < >
-                                            <tr key={book._id} className=' py-10 mb-10 text-slate-500 ' style={{ textAlign: "start", margin: 32 }}>
+                                            <tr key={book.id} className=' py-10 mb-10 text-slate-500 ' style={{ textAlign: "start", margin: 32 }}>
                                                 <td>{book.title}</td>
                                                 <td>{book.author}</td>
                                                 <td><Image src={book.image} height={50} width={60} /></td>
@@ -231,7 +171,7 @@ const Books = () => {
                                                 <td>{book.rating}</td>
                                                 <td>{book.amount}</td>
                                                 <td>
-                                                    <Popover content={() => content(book.book_id)} title="Delete!" className='mx-2'>
+                                                    <Popover content={() => content(book.id)} title="Delete!" className='mx-2'>
                                                         <DeleteOutlined className='text-red-500' />
                                                     </Popover>
                                                     <button onClick={() => showModal(book)} type="" className='mx-2 bg-slate-600 text-green-200 p-1 m-2 rounded-md'>update</button>
@@ -403,7 +343,6 @@ const Books = () => {
                                                     >
                                                         <InputNumber defaultValue={book.amount} />
                                                     </Form.Item>
-
 
 
                                                     <Form.Item
