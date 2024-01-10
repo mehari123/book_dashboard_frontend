@@ -2,57 +2,36 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import Loading from '../Loading';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
+
+import { analytics, app, db, firestore } from '../config/firebase';
+import { doc, collection, getDocs, deleteDoc,  updateDoc} from 'firebase/firestore';
+import { getDatabase } from "firebase/database";
 
 const Selles = () => {
 
-  const [sells1, setSells] = useState([]);
-
-
-
-
-  //fetch the selles data in the api  and use selles1 instead of selles
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await axios.get('https://your-api-url/sells');
-        setSells(response.data);
-      } catch (error) {
-        console.error('Error fetching books:', error);
-      }
-    };
-
-    fetchBooks();
-  }, []);
-  //use Selles1 in the api 
+  const [selles, setSells] = useState([]);
   const [loading, setLoading] = useState(false)
 
-  const selles = [
-    {
-      sell_id: 0,
-      title: 'Love',
-      author: 'john doe',
-      price: '200$',
-      phone: '123-456-7890',
-      status: 'sold'
-    },
-    {
-      sell_id: 1,
-      title: 'Another Book Title',
-      author: 'Another Author',
-      price: '150$',
-      phone: '987-654-3210',
-      status: 'available'
-    },
-  ];
+  //fetch the selles data in the api  and use selles1 instead of selles
+ useEffect(() => {
+        const fetchSells = async () => {
+            try {
+                setLoading(true);
+                const booksCollection = collection(db, 'sells')
+                const sellsSnapShoot = await getDocs(booksCollection);
+                console.log(sellsSnapShoot)
+                const sellList = sellsSnapShoot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+            
+                setSells(sellList);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching books:', error);
+                setLoading(false);
+            }
+        };
 
-
-
-
-
-
-
+        fetchSells();
+    }, []);
 
 
   return (
@@ -95,7 +74,6 @@ const Selles = () => {
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
 

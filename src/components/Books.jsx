@@ -32,7 +32,7 @@ const Books = () => {
                 const booksCollection = collection(db, 'books')
                 const booksSnapshot = await getDocs(booksCollection);
                 console.log(booksSnapshot)
-                const booksList =booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                const booksList = booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
             
                 setBooks(booksList);
                 setLoading(false);
