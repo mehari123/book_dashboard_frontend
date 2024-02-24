@@ -16,7 +16,7 @@ function App() {
   return (
     <>
       <Router>
-        <div className="md:block hidden">
+        <div className="">
           <Layout style={{ minHeight: '100vh' }} className=''>
             <Layout className=''>
               <div className="flex justify-between bg-slate-800 p-4  rounded-b-lg">
@@ -49,11 +49,6 @@ function App() {
               </div>
             </Layout>
           </Layout>
-        </div>
-        <div className='sm:hidden block'>
-          Please use your computer to see the project!
-          <br />
-          <i>will be done for mobile soon!</i>
         </div>
       </Router>
     </>
